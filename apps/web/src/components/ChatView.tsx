@@ -7336,7 +7336,12 @@ export default function ChatView(props: ChatViewProps) {
         createdAt: new Date().toISOString(),
       });
       promptRef.current = "";
-      // Attachments move with the message; their uploads stay pending.
+      // Attachments move with the message; their uploads stay pending. The
+      // refs clear now too, so a Stop before the composer's sync effect runs
+      // does not restore the moved attachments twice.
+      composerImagesRef.current = [];
+      composerFilesRef.current = [];
+      composerTerminalContextsRef.current = [];
       clearComposerDraftContent(composerDraftTarget);
       composerRef.current?.resetCursorState();
       return;
@@ -7950,7 +7955,7 @@ export default function ChatView(props: ChatViewProps) {
 
   const onSteerQueuedMessage = (id: string) => {
     const message = queuedMessages.find((entry) => entry.id === id);
-    if (!message || sendInFlightRef.current) return;
+    if (!message || sendInFlightRef.current || queueBlockedByPendingRequest) return;
     void onSend(undefined, message.submissionIntent, undefined, message);
   };
 
